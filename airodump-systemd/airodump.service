@@ -1,11 +1,11 @@
 # Run airodump with the selected networks to generate teh csv data needed for the airodump_tracker
-# Put it to /etc/systemd/system/
+# Put it in /etc/systemd/system/
 
 [Unit]
 After=bluetooth.service
 
 [Service]
-ExecStart=/work/zee/tools/airodump/run_airodump.sh
+ExecStart=/work/ha-airodump-tracker/airodump-systemd/run_airodump.sh
 Restart=always
 
 [Install]

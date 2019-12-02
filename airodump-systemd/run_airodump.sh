@@ -11,7 +11,7 @@ MONITORED_SSID=(
 
 #filtering by channels makes it more snappy, othewise goes roundrobin in all the unwanted frequencies
 #Check your router for the channel, or run airodump manually to see the wanted channels
-#Comman separated list
+#Coma separated list
 CHANNELS="8,36"
 # END OF CONFIG
 ################################
