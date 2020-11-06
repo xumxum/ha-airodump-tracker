@@ -26,6 +26,7 @@ _LOGGER = logging.getLogger(__name__)
 
 #not supported yet
 CONF_EXCLUDE = "exclude"
+CONF_MASH_DEVICES = "mash_devices"
 
 #there is the consider_home value that will make sure some time will pass before marked as away
 #so we should not put a big value here...
@@ -34,6 +35,7 @@ BERLIN_INTERVAL = 15
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Optional(CONF_EXCLUDE, default=[]): vol.All(cv.ensure_list, [cv.string]),
+        vol.Optional(CONF_MASH_DEVICES): {cv.slug: cv.string},
     }
 )
 
@@ -44,7 +46,7 @@ def get_scanner(hass, config):
 
 
 AccessPoints = namedtuple("AccessPoints", ["bssid", "channel", "ssid"])
-Device = namedtuple("Device", [ "mac", "name", "ssid", "channel", "power", "distance", "last_seen" ])
+Device = namedtuple("Device", [ "mac", "name", "ssid", "mash_device", "channel", "power", "distance", "last_seen" ])
 
 
 def convert_power_to_distance(power_dBm, wifi_channel):
@@ -69,11 +71,13 @@ class AirodumpDeviceScanner(DeviceScanner):
     def __init__(self, config):
         """Initialize the scanner."""
         self.exclude = config[CONF_EXCLUDE]
+        self.mash_devices = config[CONF_MASH_DEVICES]
 
         #devices found on our last scan
         self.devices_found = []
 
         _LOGGER.debug("Airodump Scanner initialized")
+        _LOGGER.debug("Mash devices ", self.mash_devices)
 
     def scan_devices(self):
         """Scan for new devices and return a list with found device IDs."""
@@ -98,7 +102,7 @@ class AirodumpDeviceScanner(DeviceScanner):
         filter_device = next(
             (result for result in self.devices_found if result.mac == device), None
         )
-        return {"ssid": filter_device.ssid, "channel": filter_device.channel, "power": filter_device.power, "distance": filter_device.distance, "last_seen": filter_device.last_seen}
+        return {"ssid": filter_device.ssid, "channel": filter_device.channel, "power": filter_device.power, "distance": filter_device.distance, "last_seen": filter_device.last_seen, "mash_device": filter_device.mash_device}
 
 
     def _update_info(self):
@@ -160,12 +164,17 @@ class AirodumpDeviceScanner(DeviceScanner):
                                 name = 'dev_' + mac_groups[0] + "_" + mac_groups[1]
                                 channel = filtered_accespoint[0].channel
 
+                                mash_device = 'Unknown'
+                                for md in self.mash_devices:
+                                    if md[1] in ssid:
+                                        mash_device = md[0]
+
                                 try:
                                     distance = convert_power_to_distance( int(power) , int(channel) )
                                 except ValueError:
                                     continue
 
-                                devices_found.append( Device(mac, name, ssid, channel, power, distance, lastseen) )
+                                devices_found.append( Device(mac, name, ssid, mash_device, channel, power, distance, lastseen) )
 
 
 
